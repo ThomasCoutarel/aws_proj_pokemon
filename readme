@@ -1,0 +1,104 @@
+Parfait ! Voici un texte détaillé qui explique et justifie les **choix techniques** de ton projet Pokémon sur AWS, avec la gestion des erreurs et les librairies utilisées. Tu peux l’utiliser pour un rapport ou README.
+
+---
+
+## **Justification des choix techniques du projet Pokémon S3**
+
+### **1. Source des données**
+
+* **Site choisi :** [Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/List_of_Pok%C3%A9mon_by_National_Pok%C3%A9dex_number)
+
+* **Raisons du choix :**
+
+  * Base complète des Pokémon par génération (I → IX)
+  * Chaque génération est clairement séparée par un titre HTML (`span id="Generation_I"`)
+  * Chaque Pokémon possède une image miniature directement accessible
+  * Contenu stable et structuré, idéal pour le scraping
+
+* **Alternatives :** PokeAPI, mais le projet visait à récupérer les images directement depuis Bulbapedia, ce qui nécessite un scraping HTML.
+
+---
+
+### **2. Langage et librairies**
+
+* **Python 3 :**
+
+  * Langage polyvalent pour le scraping, l’automatisation et l’interfaçage avec AWS
+  * Large écosystème de librairies pour le web et le cloud
+
+* **Librairies utilisées :**
+
+  1. **`requests`** : pour télécharger les pages HTML et les images depuis Bulbapedia
+  2. **`BeautifulSoup4` (bs4)** : pour parser le HTML et extraire les informations et images de manière fiable
+  3. **`urllib.parse.urljoin`** : pour construire correctement les URLs des images
+  4. **`boto3`** : SDK officiel AWS pour Python, utilisé pour uploader les images vers S3
+  5. **`os` et `pathlib`** : pour gérer les chemins locaux de manière sécurisée
+
+* **Raisons du choix :**
+
+  * Simplicité et robustesse des librairies
+  * Boto3 permet de gérer facilement les permissions, la création de dossiers dans S3, et la gestion des erreurs d’upload
+  * `requests` + `BeautifulSoup` est un standard pour le scraping web léger
+
+---
+
+### **3. Gestion des erreurs**
+
+* **Téléchargement des images :**
+
+  * Vérification du **status code** HTTP pour détecter les erreurs 404 ou 500
+  * Gestion des exceptions réseau (`try/except`) pour éviter que le script plante sur une image introuvable
+  * Affichage des messages `[OK]` ou `[ERREUR]` pour chaque image
+
+* **Scraping HTML :**
+
+  * Vérification de l’existence des sections (`span id="Generation_X"`) et des tables Pokémon
+  * Limitation à 10 Pokémon par génération pour éviter de surcharger le site ou le script
+
+* **Upload S3 :**
+
+  * Gestion des erreurs de permissions (`Unable to locate credentials`) via configuration AWS CLI ou IAM Role
+  * Validation que le bucket existe et que le chemin de destination est correct
+
+* **Logs clairs dans le terminal** : permet de savoir exactement quelles images ont été téléchargées et quelles erreurs sont survenues.
+
+---
+
+### **4. Infrastructure AWS**
+
+* **Instance EC2 Ubuntu :**
+
+  * Exécute le script de manière fiable et automatisée
+  * Permet d’utiliser les credentials AWS via `aws configure` ou IAM Role
+  * Permet d’exécuter des scripts périodiques si besoin (cron)
+
+* **Bucket S3 public :**
+
+  * Stockage centralisé, durable et scalable des images
+  * Accessibilité publique via URL pour chaque image Pokémon
+  * Organisation en dossiers par génération (`Generation_I/`, `Generation_II/`, …) pour la clarté et la maintenabilité
+
+* **Choix techniques :**
+
+  * S3 public pour un accès direct aux images sans passer par une API supplémentaire
+  * IAM Role ou credentials configurés pour sécuriser l’upload depuis EC2
+
+---
+
+### **5. Structure et maintenabilité**
+
+* **Script modulaire :**
+
+  * Fonctions séparées pour `download_image`, `scrape_generation` et `upload_to_s3`
+  * Paramétrage possible : nombre de Pokémon à scraper, dossier local temporaire, bucket S3
+
+* **Scalabilité :**
+
+  * Possibilité de lancer le script régulièrement pour mettre à jour les nouvelles générations
+  * Facile à adapter pour récupérer plus de Pokémon ou d’autres ressources
+
+* **Sécurité :**
+
+  * Les clés AWS ne sont jamais stockées dans le script (si IAM Role utilisé)
+  * Bucket public limité à la lecture (`s3:GetObject`), pas de suppression ni d’upload par le public
+
