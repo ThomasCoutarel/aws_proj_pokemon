@@ -1,0 +1,25 @@
+Connexion à l’instance EC2 :
+ssh -i "C:\Users\couta\Downloads\ssh_rsa_pokemon.pem" ubuntu@ec2-13-60-95-64.eu-north-1.compute.amazonaws.com
+
+Installation des dépendances de base (sur EC2) :
+sudo apt update && sudo apt upgrade -y
+sudo apt install python3-pip -y
+sudo apt install unzip -y
+
+Vérification / installation des bibliothèques Python :
+pip3 install requests beautifulsoup4 boto3
+
+Installation AWS CLI v2 :
+mkdir ~/aws-cli && cd ~/aws-cli
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+./aws/install --update -i ~/aws-cli -b ~/aws-cli/bin
+
+Configuration AWS CLI
+aws configure
+
+Transfert du script depuis ta machine locale vers EC2 :
+scp -i "C:\Users\couta\Downloads\ssh_rsa_pokemon.pem" "C:\Users\couta\Python project\aws_cloud_proj\scrape.py" ubuntu@ec2-13-60-95-64.eu-north-1.compute.amazonaws.com:/home/ubuntu/script_pokemon_s3.py
+
+Exécution du script sur EC2 :
+python3 script_pokemon_s3.py
